@@ -1,8 +1,15 @@
+/**
+ * \file CompactadoraElectroneumatica main.cpp
+ * \brief Codigo convertido de Ladder a Arduino para el funcionamiento de una compactadora
+ * de basura automatizada mediante electroneumática.
+ * \author Joseph Santiago Portilla. Ing. Electrónico - @JoePortilla
+ */
+
 // 1. BIBLIOTECAS
 #include <Arduino.h>
 
 // 2. DEFINICIÓN DE VARIABLES Y CONSTANTES
-// 2.1. ENTRADAS
+// 2.1. GPIO DE ENTRADAS
 // Botones
 const uint8_t START = 33; // Boton de Inicio
 const uint8_t STOP = 25;  // Boton de Paro
@@ -15,7 +22,7 @@ const uint8_t SC0 = 13; // Sensor de contracción. Cilindro C
 const uint8_t SC1 = 15; // Sensor de expansión. Cilindro C
 const uint8_t SL = 4;   // Sensor de llenado del tanque
 
-// 2.2. SALIDAS
+// 2.2. GPIO DE SALIDAS
 // Bobinas
 const uint8_t KM = 16; // Bobina de control del Motor
 // Electrovalvulas
@@ -23,16 +30,7 @@ const uint8_t EVA = 17; // Electroválvula de control del cilindro A
 const uint8_t EVB = 5;  // Electroválvula de control del cilindro B
 const uint8_t EVC = 18; // Electroválvula de control del cilindro C
 
-bool KMstatus = 0;
-bool EVAstatus = 0;
-bool EVBstatus = 0;
-bool EVCstatus = 0;
-
-const uint16_t intervalo = 500; // Intervalo de tiempo [ms].
-uint32_t tActual = 0;           // Almacena el tiempo actual de ejecución.
-uint32_t tPrevio = 0;           // Almacena el ultimo tiempo en que el contador fue incrementado.
-
-// 2.3. MEMORIAS DE CONTROL
+// 2.3. MEMORIAS DE CONTROL LADDER
 bool M1 = 0; // Memoria 1
 bool M2 = 0; // Memoria 2
 bool M3 = 0; // Memoria 3
@@ -42,10 +40,22 @@ bool M6 = 0; // Memoria 6
 bool M7 = 0; // Memoria 7
 bool M8 = 0; // Memoria 8
 
+// 2.4. BANDERAS DE ESTADO
+bool KMstatus = 0;
+bool EVAstatus = 0;
+bool EVBstatus = 0;
+bool EVCstatus = 0;
+
+// 2.5. TIEMPOS
+const uint16_t intervalo = 1000; // Intervalo de tiempo para la muestra de estados en el monitor serial [ms].
+uint32_t tActual = 0;            // Almacena el tiempo actual de ejecución.
+uint32_t tPrevio = 0;            // Almacena el ultimo tiempo en que el contador fue incrementado.
+
 void setup()
 {
+  // Inicializar la comunicación serial a 115200 baudios.
   Serial.begin(115200);
-  // Definición de pines como entradas.
+  // Definición de pines como entradas, y activar la resistencia de pull-down interna.
   pinMode(START, INPUT_PULLDOWN);
   pinMode(STOP, INPUT_PULLDOWN);
   pinMode(SL, INPUT_PULLDOWN);
@@ -151,52 +161,59 @@ void loop()
   }
 
   // ESCALONES DE CONTROL DE SALIDAS
+  // En la función digitalWrite se niega el estado ya que los modulos relé utilizados para
+  // activar las cargas de potencias estan configurados de esa manera.
+  // Salida Bobina Motor
   if (M1 && !M2)
   {
-    digitalWrite(KM, 0);
     KMstatus = 1;
+    digitalWrite(KM, 0);
   }
   else
   {
-    digitalWrite(KM, 1);
     KMstatus = 0;
+    digitalWrite(KM, 1);
   }
 
+  // Salida Electrovalvula A
   if (M2 && !M3)
   {
-    digitalWrite(EVA, 0);
     EVAstatus = 1;
+    digitalWrite(EVA, 0);
   }
   else
   {
-    digitalWrite(EVA, 1);
     EVAstatus = 0;
+    digitalWrite(EVA, 1);
   }
 
+  // Salida Electrovalvula B
   if (M4 && !M7)
   {
-    digitalWrite(EVB, 0);
     EVBstatus = 1;
+    digitalWrite(EVB, 0);
   }
   else
   {
-    digitalWrite(EVB, 1);
     EVBstatus = 0;
+    digitalWrite(EVB, 1);
   }
 
+  // Salida Electrovalvula C
   if (M5 && !M6)
   {
-    digitalWrite(EVC, 0);
     EVCstatus = 1;
+    digitalWrite(EVC, 0);
   }
   else
   {
-    digitalWrite(EVC, 1);
     EVCstatus = 0;
+    digitalWrite(EVC, 1);
   }
 
+  // DEBUGGING
+  // Se muestra en el monitor serial los estados de las entradas y salidas del sistema.
   tActual = millis();
-
   if (tActual - tPrevio > intervalo)
   {
     Serial.printf("START:%d-STOP:%d-SL:%d\na0:%d-a1:%d-b0:%d-b1:%d-c0:%d-c1:%d\nM1:%d-EVA:%d-EVB:%d-EVC:%d\n\n", digitalRead(START), digitalRead(STOP), digitalRead(SL), digitalRead(SA0), digitalRead(SA1), digitalRead(SB0), digitalRead(SB1), digitalRead(SC0), digitalRead(SC1), KMstatus, EVAstatus, EVBstatus, EVCstatus);
