@@ -2,6 +2,8 @@
 
 El sistema es capaz de detectar cuando el tanque de almacenamiento se ha llenado, compactar la basura y vaciar el contenedor para retomar automáticamente el proceso.
 
+<!-- <img src="https://raw.githubusercontent.com/allisonhorst/palmerpenguins/main/man/figures/logo.png" width="150" alt="logo" style="display:block;margin:auto;"> -->
+
 Este repositorio contiene los siguientes archivos:
 
 1. Diagrama Eléctrico con sus respectivas protecciones.
